@@ -27,21 +27,38 @@ console.log("PORT:", process.env.PORT || 5001);
 
 const PORT = process.env.PORT || 5001;
 
-const mongoose = require("mongoose");
-mongoose.connect("mongodb+srv://root:Tej%40s476@cluster0.r1ok0.mongodb.net/Thinkora", {
-    useNewUrlParser: true,
-    useUnifiedTopology:true,
-})
-.then(() => console.log("DB Connected Successfully"))
-.catch( (error) => {
-    console.log("DB Connection Failed");
-    console.error(error);
-    process.exit(1);
-} )
+// Connect to database using the database config
+database.connect();
 
 // Updated CORS configuration to handle authorization header
+const allowedOrigins = [
+  "http://localhost:3000",  // React default port
+  "http://localhost:5002",  // Your current setting
+  "http://localhost:3001",  // Alternative React port
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5002"
+];
+
+// Add production origins if needed
+if (process.env.NODE_ENV === 'production') {
+  allowedOrigins.push(
+    "https://yourdomain.com",
+    "https://www.yourdomain.com"
+  );
+}
+
 app.use(cors({
-  origin: "http://localhost:5002",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
@@ -54,6 +71,18 @@ app.use(cors({
   ],
   exposedHeaders: ['Authorization', 'Authorisation'],
 }));
+
+// CORS error handling middleware
+app.use((err, req, res, next) => {
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS Error: Origin not allowed',
+      error: err.message
+    });
+  }
+  next(err);
+});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -82,6 +111,16 @@ app.use('/api/v1/ai', aiRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     message: "Welcome to the API",
+  });
+});
+
+// CORS debug route
+app.get("/cors-debug", (req, res) => {
+  res.status(200).json({
+    message: "CORS is working!",
+    origin: req.headers.origin,
+    userAgent: req.headers['user-agent'],
+    timestamp: new Date().toISOString()
   });
 });
 
