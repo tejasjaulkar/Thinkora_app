@@ -25,18 +25,15 @@ console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
 console.log("RAZORPAY_KEY_ID exists:", !!process.env.RAZORPAY_KEY_ID);
 console.log("PORT:", process.env.PORT || 5001);
 
-const PORT = process.env.PORT || 5001;
+const PORT = 5001; // Fixed port for consistency
 
 // Connect to database using the database config
 database.connect();
 
 // Updated CORS configuration to handle authorization header
 const allowedOrigins = [
-  "http://localhost:3000",  // React default port
-  "http://localhost:5002",  // Your current setting
-  "http://localhost:3001",  // Alternative React port
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:5002"
+  "http://localhost:5002",  // Fixed React app port
+  "http://127.0.0.1:5002"  // Alternative localhost format
 ];
 
 // Add production origins if needed
